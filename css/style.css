@@ -95,12 +95,16 @@ input, textarea{ font: inherit; color: inherit; }
   margin: 0 auto;
   padding: 0 20px;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
 }
-.header-left{ display: flex; align-items: center; gap: 4px; justify-self: start; }
+/* The logo occupies the true center grid column; the asymmetric search area
+   cannot shift it away from the bell on its left or account/cart on its right. */
+.header-left{ display: flex; min-width: 0; align-items: center; gap: 4px; justify-self: start; }
 .header-right{ display: flex; align-items: center; gap: 4px; justify-self: end; }
+.logo-lockup{ grid-column: 2; justify-self: center; }
+.logo-img{ width: auto; max-width: 160px; height: 40px; object-fit: contain; }
 
 .icon-btn{
   position: relative;
@@ -158,36 +162,7 @@ input, textarea{ font: inherit; color: inherit; }
   white-space: nowrap;
 }
 
-/* .main-nav serves two roles: a mobile dropdown panel (toggled via the
-   hamburger button) and, at desktop widths, an always-visible inline nav.
-   See the min-width: 960px block below for the desktop override. */
-.main-nav{
-  position: fixed;
-  top: var(--header-h);
-  left: 0; right: 0;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
-  padding: 8px 20px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 15px;
-  font-weight: 600;
-  transform: translateY(-8px);
-  opacity: 0;
-  pointer-events: none;
-  transition: all .22s var(--ease);
-  z-index: 49;
-}
-.main-nav.open{ transform: translateY(0); opacity: 1; pointer-events: auto; }
-.main-nav a{
-  padding: 12px 4px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  transition: color .2s;
-}
-.main-nav a:hover{ color: var(--gold-dark); }
-
+/* The hamburger always opens the dedicated modern #navDrawer. */
 .nav-toggle{ display: flex; }
 
 /* ==========================================================================
@@ -1430,23 +1405,6 @@ input, textarea{ font: inherit; color: inherit; }
    RESPONSIVE
    ========================================================================== */
 @media (min-width: 960px){
-  .nav-toggle{ display: none; }
-  .main-nav{
-    position: static;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 26px;
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin-right: 8px;
-    font-size: 14.5px;
-    transform: none;
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .main-nav a{ padding: 0; border-bottom: none; }
   .header-left{ gap: 6px; }
   .home-grid{ gap: 22px; }
   .shop-grid{ grid-template-columns: repeat(3, 1fr); gap: 22px; }
@@ -1966,8 +1924,13 @@ input, textarea{ font: inherit; color: inherit; }
 .header-search-submit:hover{ background: var(--accent-search-dark); }
 .header-search-submit svg{ width: 18px; height: 18px; }
 
+@media (max-width: 760px){
+  /* Keep the centered mark and its neighboring action icons from colliding.
+     Search remains available through the catalog controls on narrow screens. */
+  .header-search{ display: none; }
+  .header-inner{ padding: 0 12px; gap: 4px; }
+}
 @media (max-width: 640px){
-  .header-search{ flex-basis: 130px; }
   .header-search-category{ padding: 0 14px 0 10px; }
   .header-search-category select{ max-width: 56px; font-size: 11.5px; }
 }

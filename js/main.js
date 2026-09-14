@@ -132,6 +132,8 @@ const state = {
   products: [],
   filtered: [],
   activeCategory: 'all', // 'all' | 'Shoes' | 'Clothes' | 'Accessories'
+  activeCollection: 'all', // 'all' | 'new-arrivals' | 'best-sellers'
+  sort: 'default',
   activeGender: 'all',   // 'all' | 'Men' | 'Women' | 'Unisex' | 'Kids'
   searchTerm: '',
   currentPage: 1,        // 1-indexed page into state.filtered for the Shop by Category grid
@@ -153,14 +155,13 @@ const dom = {
   searchClear: document.getElementById('searchClear'),
   categoryPills: document.getElementById('categoryPills'),
   resetFilters: document.getElementById('resetFilters'),
+  sortSelect: document.getElementById('sortSelect'),
 
   genderDropdown: document.getElementById('genderDropdown'),
   genderDropdownBtn: document.getElementById('genderDropdownBtn'),
   genderDropdownLabel: document.getElementById('genderDropdownLabel'),
   genderDropdownMenu: document.getElementById('genderDropdownMenu'),
 
-  navToggle: document.getElementById('navToggle'),
-  mainNav: document.getElementById('mainNav'),
   // NOTE: #headerSearchBtn and #scrollTopBtn/#year are intentionally NOT
   // captured here anymore (see BUGFIX comments at their old call sites in
   // init() and bindStaticEvents() below) — #headerSearchBtn no longer
@@ -341,6 +342,7 @@ async function init() {
     dom.searchClear.hidden = state.searchTerm.length === 0;
   }
 
+  applyCatalogRoute(deepLinkParams);
   applyFilters();
   renderCart(); // now product data is available to resolve names/images/prices
 
@@ -517,6 +519,32 @@ function productMatchesCategory(p, category) {
   return Array.isArray(group) && group.includes(p.productType);
 }
 
+function productMatchesCollection(product, collection) {
+  if (collection === 'all') return true;
+  const metadataKey = collection === 'new-arrivals' ? 'isNewArrival' : 'isBestSeller';
+  const label = collection === 'new-arrivals' ? 'new-arrivals' : 'best-sellers';
+  const taggedProductsExist = state.products.some((item) =>
+    item[metadataKey] === true || (Array.isArray(item.collections) && item.collections.includes(label))
+  );
+  // Firestore catalogs that explicitly tag a collection use those tags. Older
+  // catalogs remain compatible: their entire published inventory is the
+  // collection, ordered by the same createdAt/soldCount rule as the homepage.
+  if (!taggedProductsExist) return true;
+  return product[metadataKey] === true || (Array.isArray(product.collections) && product.collections.includes(label));
+}
+
+function compareProducts(a, b) {
+  if (state.activeCollection === 'new-arrivals' || state.sort === 'newest') {
+    return toMillis(b.createdAt) - toMillis(a.createdAt);
+  }
+  if (state.activeCollection === 'best-sellers' || state.sort === 'best-selling') {
+    return (Number(b.soldCount) || 0) - (Number(a.soldCount) || 0);
+  }
+  if (state.sort === 'price-low') return (Number(a.price) || 0) - (Number(b.price) || 0);
+  if (state.sort === 'price-high') return (Number(b.price) || 0) - (Number(a.price) || 0);
+  return 0;
+}
+
 const handleSearchInput = debounce(() => {
   state.searchTerm = dom.searchInput.value.trim().toLowerCase();
   dom.searchClear.hidden = state.searchTerm.length === 0;
@@ -529,12 +557,14 @@ function applyFilters() {
   const gender = state.activeGender;
 
   state.filtered = state.products.filter((p) => {
+    if (!productMatchesCollection(p, state.activeCollection)) return false;
     if (!productMatchesCategory(p, cat)) return false;
     if (gender !== 'all' && p.gender !== gender) return false;
     if (!term) return true;
     const haystack = `${p.name} ${p.styleName || ''} ${p.brand} ${p.productType} ${p.shortDescription || ''}`.toLowerCase();
     return haystack.includes(term);
   });
+  state.filtered.sort(compareProducts);
 
   // Any change to the active filters starts back on page 1 — otherwise a
   // shopper could land on, say, page 4 of a search result set that now
@@ -1245,18 +1275,6 @@ function inlineMarkdown(text) {
 function bindStaticEvents() {
   bindProductGridEvents();
 
-  // Mobile nav toggle
-  dom.navToggle.addEventListener('click', () => {
-    const isOpen = dom.mainNav.classList.toggle('open');
-    dom.navToggle.setAttribute('aria-expanded', String(isOpen));
-  });
-  dom.mainNav.querySelectorAll('a').forEach((a) =>
-    a.addEventListener('click', () => {
-      dom.mainNav.classList.remove('open');
-      dom.navToggle.setAttribute('aria-expanded', 'false');
-    })
-  );
-
   // BUGFIX (QA pass): this used to bind a click listener to
   // dom.headerSearchBtn here. #headerSearchBtn (the old icon-only search
   // button) was removed from the header markup in favor of the full
@@ -1282,7 +1300,10 @@ function bindStaticEvents() {
 
   // Category filter pills
   dom.categoryPills.querySelectorAll('.pill').forEach((pill) => {
-    pill.addEventListener('click', () => setActiveCategory(pill.dataset.category));
+    pill.addEventListener('click', () => {
+      if (pill.dataset.filter) setActiveCollection(pill.dataset.filter);
+      else setActiveCategory(pill.dataset.category);
+    });
   });
 
   dom.resetFilters.addEventListener('click', () => {
@@ -1291,6 +1312,12 @@ function bindStaticEvents() {
     dom.searchClear.hidden = true;
     setActiveGender('all');
     setActiveCategory('all');
+    setActiveCollection('all');
+  });
+
+  dom.sortSelect?.addEventListener('change', () => {
+    state.sort = dom.sortSelect.value;
+    applyFilters();
   });
 
   // Pagination controls (Previous / page numbers / Next) — delegated since
@@ -1320,15 +1347,6 @@ function bindStaticEvents() {
   });
   document.addEventListener('click', (e) => {
     if (!dom.genderDropdown.contains(e.target)) closeGenderDropdown();
-  });
-
-  // "View all" links on the home sections: reset filters, then let the
-  // anchor's default behavior scroll to #shop.
-  document.querySelectorAll('[data-action="view-all"]').forEach((link) => {
-    link.addEventListener('click', () => {
-      setActiveCategory('all');
-      setActiveGender('all');
-    });
   });
 
   // Footer "Shop by Category" links
@@ -1396,11 +1414,62 @@ function bindStaticEvents() {
   });
 }
 
-function setActiveCategory(category) {
-  state.activeCategory = category;
-  dom.categoryPills.querySelectorAll('.pill').forEach((p) => {
-    p.classList.toggle('active', p.dataset.category === category);
+const CATALOG_FILTERS = new Set(['all', 'new-arrivals', 'best-sellers']);
+
+function applyCatalogRoute(params) {
+  const filter = params.get('filter');
+  if (CATALOG_FILTERS.has(filter)) state.activeCollection = filter;
+  const category = params.get('cat');
+  if (category && ['Shoes', 'Clothes', 'Accessories'].includes(category)) state.activeCategory = category;
+  const gender = params.get('gender');
+  if (gender && ['Men', 'Women', 'Kids', 'Unisex'].includes(gender)) state.activeGender = gender;
+  const sort = params.get('sort');
+  if (sort && dom.sortSelect?.querySelector(`option[value="${sort}"]`)) {
+    state.sort = sort;
+    dom.sortSelect.value = sort;
+  }
+  const query = params.get('q');
+  if (query && !state.searchTerm) {
+    state.searchTerm = query.trim().toLowerCase();
+    dom.searchInput.value = query;
+    dom.searchClear.hidden = !state.searchTerm;
+  }
+  updateCatalogControls();
+  if (state.activeGender !== 'all') {
+    const option = dom.genderDropdownMenu?.querySelector(`[data-value="${state.activeGender}"]`);
+    if (option) dom.genderDropdownLabel.textContent = option.textContent;
+  }
+}
+
+function setActiveCollection(filter) {
+  state.activeCollection = CATALOG_FILTERS.has(filter) ? filter : 'all';
+  updateCatalogControls();
+  if (document.getElementById('shopCatalogTitle')) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('filter', state.activeCollection);
+    window.history.replaceState({}, '', url);
+  }
+  applyFilters();
+}
+
+function updateCatalogControls() {
+  dom.categoryPills?.querySelectorAll('.pill').forEach((pill) => {
+    const value = pill.dataset.filter || pill.dataset.category;
+    const active = pill.dataset.filter
+      ? pill.dataset.filter === state.activeCollection
+      : pill.dataset.category === state.activeCategory && state.activeCollection === 'all';
+    pill.classList.toggle('active', active);
+    if (value === state.activeCollection && pill.dataset.filter) pill.setAttribute('aria-pressed', 'true');
+    else pill.removeAttribute('aria-pressed');
   });
+  const title = document.getElementById('shopCatalogTitle');
+  if (title) title.textContent = ({ all: 'ALL PRODUCTS', 'new-arrivals': 'NEW ARRIVALS', 'best-sellers': 'BEST SELLERS' })[state.activeCollection];
+}
+
+function setActiveCategory(category) {
+  state.activeCategory = category || 'all';
+  state.activeCollection = 'all';
+  updateCatalogControls();
   applyFilters();
 }
 

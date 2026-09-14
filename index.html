@@ -197,15 +197,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/></svg>
       </button>
 
-      <!-- Desktop-only inline nav (hidden below 960px — the hamburger opens
-           navDrawer instead at those widths; see min-width:960px rule). -->
-      <nav class="main-nav" id="mainNav">
-        <a href="#new-arrivals">New Arrivals</a>
-        <a href="#best-sellers">Best Sellers</a>
-        <a href="#shop">Shop All</a>
-        <a href="#footer">Contact</a>
-      </nav>
-
       <!-- Header search bar (Image 1): category dropdown + text input +
            orange submit button. Submitting re-uses the existing shop-section
            search/filter UI (#searchInput, .pill[data-category]) instead of
@@ -233,7 +224,7 @@
     </div>
 
     <a href="#top" class="logo-lockup" aria-label="Rare Vision home">
-      <img src="assets/logos/rare-vision-logo-header.png" alt="Rare Vision" class="logo-img" style="height:40px;width:auto;max-width:160px;object-fit:contain;display:block;">
+      <img src="assets/logos/rare-vision-logo-header.png" alt="Rare Vision" class="logo-img">
     </a>
 
     <div class="header-right">
@@ -373,8 +364,8 @@
   <div class="hero-content">
     <h1 class="hero-title">Expect Only The Exceptional!</h1>
     <div class="hero-actions">
-      <a href="#new-arrivals" class="btn-hero-primary">New Arrivals</a>
-      <a href="#shop" class="btn-hero-outline">Shop All</a>
+      <a href="shop.html?filter=new-arrivals" class="btn-hero-primary">New Arrivals</a>
+      <a href="shop.html?filter=all" class="btn-hero-outline">Shop All</a>
     </div>
   </div>
 </section>
@@ -385,7 +376,7 @@
   <div class="home-grid" id="newArrivalsGrid">
     <!-- injected by JS -->
   </div>
-  <a href="#shop" class="view-all-link" data-action="view-all" data-category="all">View all</a>
+  <a href="shop.html?filter=new-arrivals" class="view-all-link">View all</a>
 </section>
 
 <!-- ===================== BEST SELLERS ===================== -->
@@ -394,7 +385,7 @@
   <div class="home-grid" id="bestSellersGrid">
     <!-- injected by JS -->
   </div>
-  <a href="#shop" class="view-all-link" data-action="view-all" data-category="all">View all</a>
+  <a href="shop.html?filter=best-sellers" class="view-all-link">View all</a>
 </section>
 
 <!-- ===================== BRAND MARQUEE ===================== -->
@@ -558,7 +549,7 @@
 <div class="overlay" id="signinOverlay"></div>
 <aside class="signin-panel" id="signinPanel" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Sign in">
   <div class="signin-panel-header">
-    <span class="logo-lockup signin-panel-logo"><img src="assets/logos/rare-vision-logo-header.png" alt="Rare Vision" class="logo-img" style="height:40px;width:auto;max-width:160px;object-fit:contain;display:block;"></span>
+    <span class="logo-lockup signin-panel-logo"><img src="assets/logos/rare-vision-logo-header.png" alt="Rare Vision" class="logo-img"></span>
     <button class="icon-btn" id="signinClose" aria-label="Close sign in">&times;</button>
   </div>
 
