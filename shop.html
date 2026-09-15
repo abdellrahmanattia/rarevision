@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shop Catalog | Rare Vision</title>
-<meta name="description" content="Explore Rare Vision catalog — filter by New Arrivals, Best Sellers, Shoes, Apparel, and Accessories.">
+<title>Shop All | Rare Vision</title>
+<meta name="description" content="Shop the full Rare Vision catalog — new arrivals, best sellers, and everything in between. Filter by category, gender, or search, sorted your way.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,66 +12,183 @@
 
 <link rel="stylesheet" href="css/style.css">
 
+<!-- Prompt 3 additions: Shop by Category pagination controls and the guest
+     discount popup. Scoped to only the new class names below, so nothing
+     here touches or depends on css/style.css's existing rules; anything
+     that reuses an existing class (.overlay, .product-modal, .modal-close,
+     .modal-body, .btn-signin, .btn-text, .btn-spinner, .btn-select-size,
+     .form-error) automatically picks up that file's styling instead. -->
 <style>
-  .catalog-header-banner {
-    background: var(--surface-muted);
-    border-bottom: 1px solid var(--border);
-    padding: 48px 20px;
-    text-align: center;
+  /* ---- Shop by Category: pagination controls ---- */
+  .pagination-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 32px 0 8px;
   }
-  .catalog-header-title {
-    font-family: var(--font-display);
-    font-size: clamp(26px, 4vw, 42px);
-    font-weight: 800;
-    margin: 0 0 8px;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-  .catalog-header-sub {
-    font-size: 14.5px;
-    color: var(--text-muted);
-    margin: 0;
-  }
-  .sort-dropdown {
-    position: relative;
-    flex-shrink: 0;
-  }
-  .sort-dropdown select {
-    height: 44px;
-    padding: 0 36px 0 14px;
-    border: 1.5px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    font-size: 13.5px;
-    font-weight: 600;
+  .page-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid #d8d8d8;
     background: #fff;
-    color: var(--text);
+    color: #1a1a1a;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
     cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
-  .sort-dropdown select:focus {
-    border-color: var(--gold);
-    outline: none;
+  .page-btn:hover:not(:disabled):not(.active) {
+    border-color: #1a1a1a;
   }
-  .sort-dropdown svg {
+  .page-btn.active {
+    background: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #fff;
+    cursor: default;
+  }
+  .page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .page-btn--nav {
+    font-weight: 500;
+    padding: 0 18px;
+  }
+  .page-ellipsis {
+    min-width: 24px;
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    user-select: none;
+  }
+
+  /* ---- Guest discount popup content (positioning/backdrop come from the
+     shared .product-modal / .overlay rules in css/style.css) ---- */
+  .discount-popup-body {
+    padding: 36px 32px 32px;
+    text-align: center;
+    max-width: 420px;
+    box-sizing: border-box;
+  }
+  .discount-popup-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0 0 10px;
+    letter-spacing: 0.02em;
+  }
+  .discount-popup-subtitle {
+    font-size: 14px;
+    color: #555;
+    margin: 0 0 22px;
+    line-height: 1.5;
+  }
+  .discount-popup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .discount-popup-form input[type="email"] {
+    width: 100%;
+    height: 46px;
+    padding: 0 14px;
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  .discount-popup-dismiss {
+    display: block;
+    margin: 18px auto 0;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .discount-popup-success {
+    padding-top: 4px;
+  }
+  .discount-popup-code-label {
+    font-size: 13px;
+    color: #555;
+    margin: 0 0 8px;
+  }
+  .discount-popup-code {
+    display: inline-block;
+    padding: 10px 22px;
+    border: 2px dashed #1a1a1a;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    margin: 0 0 14px;
+  }
+  .discount-popup-success-sub {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+    margin: 0 0 20px;
+  }
+
+  /* Standard visually-hidden utility, in case css/style.css doesn't
+     already define .sr-only — harmless duplicate if it does. */
+  .sr-only {
     position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 14px;
-    height: 14px;
-    color: var(--text-faint);
-    pointer-events: none;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 </style>
 
+<!-- Firebase v10 Modular SDK. firebase-config.js is the ONLY place that
+     calls initializeApp() — every other module (auth.js, firebase-data.js)
+     imports `auth` / `db` from it. IMPORTANT: js/auth.js was written before
+     this migration and may still call initializeApp() with its own
+     firebaseConfig placeholder — if so, update it to
+     `import { auth } from './firebase-config.js';` instead, or the second
+     initializeApp() call will throw. -->
 <script type="module" src="js/firebase-config.js"></script>
+
+<!-- Bridges the Firebase v10 SDK into the classic (non-module) main.js via
+     window.RareVisionFirebase — see js/firebase-data.js. -->
 <script type="module" src="js/firebase-data.js"></script>
+
+<!-- Firebase Authentication (Email & Password). Loaded as a native ES
+     module — see js/auth.js for the register/login/reset functions this
+     exposes on window.RareVisionAuth. -->
 <script type="module" src="js/auth.js"></script>
+
+<!-- Task 1.2 — Header overhaul: eye logo, header search bar, notification
+     bell drawer (live Firestore query), and the full-screen nav drawer.
+     Self-contained module — imports `auth`/`db` from firebase-config.js
+     directly and does not touch main.js/auth.js. See header.js for the
+     "read this before wiring main.js" note about #navToggle/#notifyBtn/
+     #accountToggle. -->
 <script type="module" src="js/header.js"></script>
+
+<!-- Transactional email dispatcher (welcome/discount email, restock
+     notifications, etc.). Native ES module — imports `db` from
+     firebase-config.js directly, same as every other module above, and
+     exposes window.RareVisionEmail so the classic (non-module) js/main.js
+     can call sendWelcomeEmail()/triggerRestockNotifications() without an
+     `import`. See the "BROWSER BRIDGE" section at the bottom of
+     js/email-dispatcher.js. -->
 <script type="module" src="js/email-dispatcher.js"></script>
 </head>
 <body>
+
 
 <!-- ===================== HEADER ===================== -->
 <header class="site-header" id="siteHeader">
@@ -81,6 +198,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/></svg>
       </button>
 
+      <!-- Header search bar (Image 1): category dropdown + text input +
+           orange submit button. Submitting re-uses the existing shop-section
+           search/filter UI (#searchInput, .pill[data-category]) instead of
+           duplicating filtering logic — see js/header.js. -->
       <form class="header-search" id="headerSearchForm" role="search" autocomplete="off">
         <div class="header-search-category">
           <select id="headerSearchCategory" aria-label="Search category">
@@ -104,7 +225,7 @@
     </div>
 
     <a href="index.html" class="logo-lockup" aria-label="Rare Vision home">
-      <img src="assets/logos/rare-vision-logo-header.png" alt="Rare Vision" class="logo-img" style="height:40px;width:auto;max-width:160px;object-fit:contain;display:block;">
+      <img src="assets/logos/rare-vision-logo-header.png" alt="Rare Vision" class="logo-img">
     </a>
 
     <div class="header-right">
@@ -119,7 +240,7 @@
   </div>
 </header>
 
-<!-- ===================== NOTIFICATIONS DRAWER ===================== -->
+<!-- ===================== NOTIFICATIONS DRAWER (Image 3) ===================== -->
 <div class="overlay" id="notifyOverlay"></div>
 <aside class="notify-panel" id="notifyPanel" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Notifications">
   <div class="notify-panel-header">
@@ -128,18 +249,20 @@
   </div>
   <div class="notify-panel-body" id="notifyPanelBody">
     <div class="notify-list" id="notifyList"></div>
+
     <div class="notify-empty" id="notifyEmpty" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke-linecap="round"/></svg>
       <p class="notify-empty-title">You are all caught up</p>
       <p class="notify-empty-sub">New drops and offers will show up here.</p>
     </div>
+
     <div class="notify-loading" id="notifyLoading">
       <div class="spinner"></div>
     </div>
   </div>
 </aside>
 
-<!-- ===================== NAV DRAWER ===================== -->
+<!-- ===================== NAV DRAWER (Image 4) ===================== -->
 <div class="overlay" id="navDrawerOverlay"></div>
 <aside class="nav-drawer" id="navDrawer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Menu">
   <div class="nav-drawer-header">
@@ -156,47 +279,64 @@
   </div>
 
   <div class="nav-drawer-body">
+    <!-- NOTE ON CATEGORY VALUES: the current shop section only filters by
+         three real category-pill values — Accessories, Shoes, Clothes (see
+         #categoryPills in the header of this file) — plus the Men/Women/
+         Kids/Unisex gender facet the footer already uses. T-Shirts,
+         Sweatpants, Shorts, Swimshorts, Brands, Hats, and Other are part of
+         the richer taxonomy Image 4 asks for, but nothing in the products/
+         {productId} contract currently distinguishes them from "Clothes" —
+         so rather than fire a data-category filter that would silently
+         match zero products, those links go to the shop section as-is.
+         "All Products", "Shoes", and "Accessories" DO match real pills and
+         are wired up below. -->
     <div class="nav-drawer-columns">
       <div class="nav-drawer-col">
         <h4>Clothing</h4>
-        <a href="shop.html?filter=all">All Products</a>
-        <a href="shop.html?q=T-Shirts">T-Shirts</a>
-        <a href="shop.html?q=Sweatpants">Sweatpants</a>
-        <a href="shop.html?q=Shorts">Shorts</a>
-        <a href="shop.html?q=Swimshorts">Swimshorts</a>
+        <a href="#shop" data-action="footer-filter" data-category="all">All Products</a>
+        <a href="#shop">T-Shirts</a>
+        <a href="#shop">Sweatpants</a>
+        <a href="#shop">Shorts</a>
+        <a href="#shop">Swimshorts</a>
       </div>
       <div class="nav-drawer-col">
         <h4>Collections</h4>
-        <a href="shop.html?cat=Shoes">Shoes</a>
-        <a href="shop.html?q=Brands">Brands</a>
-        <a href="shop.html?q=Hats">Hats</a>
-        <a href="shop.html?q=Other">Other</a>
+        <a href="#shop" data-action="footer-filter" data-category="Shoes">Shoes</a>
+        <a href="#shop">Brands</a>
+        <a href="#shop">Hats</a>
+        <a href="#shop">Other</a>
       </div>
     </div>
 
     <div class="nav-drawer-columns">
       <div class="nav-drawer-col">
         <h4>Shop by category</h4>
-        <a href="shop.html?gender=Men">Men</a>
-        <a href="shop.html?gender=Women">Women</a>
-        <a href="shop.html?gender=Kids">Kids</a>
-        <a href="shop.html?gender=Unisex">Unisex</a>
+        <a href="#shop" data-action="footer-filter" data-gender="Men">Men</a>
+        <a href="#shop" data-action="footer-filter" data-gender="Women">Women</a>
+        <a href="#shop" data-action="footer-filter" data-gender="Kids">Kids</a>
+        <a href="#shop" data-action="footer-filter" data-gender="Unisex">Unisex</a>
       </div>
       <div class="nav-drawer-col">
         <h4>Featured</h4>
-        <a href="shop.html?filter=all">Sale</a>
+        <!-- Sale / Coming Soon / Restocks have no matching field in the
+             products/{productId} contract yet (no `onSale`, `comingSoon`,
+             or `restockedAt` flag to filter on) — these link to the shop
+             section as a placeholder rather than firing a category filter
+             that would silently match zero products. Wire up a real
+             data-category (or a new filter type) once those fields exist. -->
+        <a href="#shop">Sale</a>
         <a href="shop.html?filter=new-arrivals">New Arrivals <span class="badge-new">NEW</span></a>
-        <a href="shop.html?filter=all">Coming Soon</a>
+        <a href="#shop">Coming Soon</a>
         <a href="shop.html?filter=best-sellers">Best Sellers</a>
-        <a href="shop.html?filter=all">Restocks</a>
-        <a href="shop.html?cat=Accessories">Accessories</a>
+        <a href="#shop">Restocks</a>
+        <a href="#shop" data-action="footer-filter" data-category="Accessories">Accessories</a>
       </div>
     </div>
 
     <div class="nav-drawer-help">
-      <a href="#global-footer">Exchange Your Item</a>
-      <a href="#global-footer">FAQ</a>
-      <a href="#global-footer">Contact Us</a>
+      <a href="#footer">Exchange Your Item</a>
+      <a href="#footer">FAQ</a>
+      <a href="#footer">Contact Us</a>
     </div>
   </div>
 
@@ -206,27 +346,37 @@
   </div>
 </aside>
 
-<!-- CATALOG HERO BANNER -->
-<section class="catalog-header-banner">
-  <h1 class="catalog-header-title" id="shopCatalogTitle">ALL PRODUCTS</h1>
-  <p class="catalog-header-sub">Expect Only The Exceptional!</p>
-</section>
+<!-- ===================== ACCOUNT PROFILE MODAL ===================== -->
+<div class="modal-overlay" id="profileModalOverlay"></div>
+<div class="product-modal profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Your account">
+  <button class="modal-close" id="profileModalClose" aria-label="Close account">&times;</button>
+  <div class="modal-body profile-modal-body" id="profileModalBody">
+    <!-- injected by js/header.js: signed-in email + sign out action -->
+  </div>
+</div>
 
-<!-- SHOP CATALOG SECTION -->
-<section class="shop-section" id="shop" style="padding-top:32px;">
+<!-- ===================== SHOP (full catalog) =====================
+     Same #shop grid/toolbar/pagination markup and element ids as
+     index.html's embedded "Shop by Category" section — js/main.js's
+     DOM refs, filtering, sorting, and pagination all work unmodified
+     here. The only addition is initFilterFromUrl() (see js/main.js),
+     which reads ?filter=new-arrivals|best-sellers|all off the URL on
+     load and sets the initial sort + heading before the first render —
+     see index.html's hero buttons and "View all" links. ===================== -->
+<section class="shop-section shop-page-section" id="shop">
+  <h2 class="showcase-heading" id="shopHeading">SHOP BY CATEGORY</h2>
+
   <div class="shop-toolbar">
     <div class="filter-pills" id="categoryPills">
-      <button class="pill" data-filter="new-arrivals">New Arrivals</button>
-      <button class="pill" data-filter="best-sellers">Best Sellers</button>
       <button class="pill" data-category="Accessories">Accessories</button>
       <button class="pill" data-category="Shoes">Shoes</button>
       <button class="pill" data-category="Clothes">Clothes</button>
-      <button class="pill active" data-category="all" data-filter="all">All</button>
+      <button class="pill active" data-category="all">All</button>
     </div>
 
     <div class="search-box">
       <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>&times;</button>
-      <input type="text" id="searchInput" placeholder="Search catalog...">
+      <input type="text" id="searchInput" placeholder="Search for models, brands, or colors...">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
     </div>
 
@@ -243,27 +393,21 @@
         <li role="option" data-value="Kids">Kids</li>
       </ul>
     </div>
-
-    <div class="sort-dropdown">
-      <select id="sortSelect" aria-label="Sort products">
-        <option value="default" selected>Sort by: Featured</option>
-        <option value="newest">Newest First</option>
-        <option value="best-selling">Best Sellers</option>
-        <option value="price-low">Price: Low to High</option>
-        <option value="price-high">Price: High to Low</option>
-      </select>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
   </div>
 
   <p class="results-meta" id="resultsMeta"></p>
 
-  <div class="shop-grid" id="productsGrid"></div>
+  <div class="shop-grid" id="productsGrid">
+    <!-- injected by JS -->
+  </div>
 
+  <!-- Previous / 1 2 3… / Next controls — injected by JS, shown only when
+       the filtered result count is greater than 10 (see renderShopGrid()
+       / renderPaginationControls() in js/main.js). -->
   <nav class="pagination-controls" id="paginationControls" aria-label="Product pages" hidden></nav>
 
   <div class="empty-state" id="emptyState" hidden>
-    <p>No products match your search or filter criteria.</p>
+    <p>No products match your search.</p>
     <button class="btn-select-size" id="resetFilters" style="max-width:220px;margin:0 auto;">Reset Filters</button>
   </div>
 
@@ -272,11 +416,6 @@
     <p>Loading products…</p>
   </div>
 </section>
-
-<!-- Hidden Containers Required for Grid Interactivity -->
-<div id="newArrivalsGrid" hidden></div>
-<div id="bestSellersGrid" hidden></div>
-<div id="brandTrack" hidden></div>
 
 <!-- ===================== CART OVERLAY + PANEL ===================== -->
 <div class="overlay" id="cartOverlay"></div>
@@ -309,7 +448,7 @@
     <div class="cart-items" id="cartItems"></div>
     <div class="cart-empty" id="cartEmpty">
       <p>Your cart is empty.</p>
-      <a href="shop.html?filter=all" class="btn-select-size" id="cartEmptyShop" style="display:inline-block;width:auto;padding:12px 28px;">Browse Products</a>
+      <a href="#shop" class="btn-select-size" id="cartEmptyShop" style="display:inline-block;width:auto;padding:12px 28px;">Browse Products</a>
     </div>
 
     <div class="cart-accordion" id="shippingAccordion">
@@ -344,7 +483,9 @@
 
     <div class="cart-upsell" id="cartUpsell" hidden>
       <h4 class="cart-upsell-heading">Others Also Bought</h4>
-      <div class="cart-upsell-track" id="cartUpsellTrack"></div>
+      <div class="cart-upsell-track" id="cartUpsellTrack">
+        <!-- injected by JS: products the admin flagged via cartSuggestion in Firestore -->
+      </div>
     </div>
   </div>
 
@@ -360,23 +501,29 @@
 <!-- Toast notifications -->
 <div class="toast" id="toast"></div>
 
-<!-- SIGN IN DRAWER & ACCOUNT MODAL -->
-<div class="modal-overlay" id="profileModalOverlay"></div>
-<div class="product-modal profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Your account">
-  <button class="modal-close" id="profileModalClose" aria-label="Close account">&times;</button>
-  <div class="modal-body profile-modal-body" id="profileModalBody"></div>
+<!-- ===================== PRODUCT DETAIL MODAL ===================== -->
+<div class="modal-overlay" id="modalOverlay"></div>
+<div class="product-modal" id="productModal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Product details">
+  <button class="modal-close" id="modalClose" aria-label="Close product details">&times;</button>
+  <div class="modal-body" id="modalContent">
+    <!-- injected by JS: gallery, price, size selector, specs, description -->
+  </div>
 </div>
 
+<!-- ===================== SIGN IN DRAWER ===================== -->
 <div class="overlay" id="signinOverlay"></div>
 <aside class="signin-panel" id="signinPanel" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Sign in">
   <div class="signin-panel-header">
-    <span class="logo-lockup signin-panel-logo"><img src="assets/logos/rare-vision-logo-header.png" alt="Rare Vision" class="logo-img" style="height:40px;width:auto;max-width:160px;object-fit:contain;display:block;"></span>
+    <span class="logo-lockup signin-panel-logo"><img src="assets/logos/rare-vision-logo-header.png" alt="Rare Vision" class="logo-img"></span>
     <button class="icon-btn" id="signinClose" aria-label="Close sign in">&times;</button>
   </div>
 
   <div class="signin-panel-body">
+
+    <!-- ---- Section 1: existing account ---- -->
     <form id="signinForm" class="signin-form" novalidate>
       <h3 class="signin-section-title">Already Have An Account</h3>
+
       <p class="form-error" id="signinFormError" hidden></p>
       <p class="form-success" id="signinFormSuccess" hidden></p>
 
@@ -406,15 +553,29 @@
 
     <div class="signin-divider"></div>
 
+    <!-- ---- Section 2: new account prompt ---- -->
     <div class="signin-new-account">
       <h3 class="signin-section-title">No Account Yet</h3>
       <p class="signin-subtext">Enjoy added benefits and a richer experience by creating a personal account.</p>
       <a href="register.html" class="btn-create-account">Create an account on RAREVISION</a>
     </div>
+
   </div>
 </aside>
 
-<!-- GUEST DISCOUNT POPUP -->
+<!-- ===================== GUEST DISCOUNT POPUP =====================
+     Launched by js/main.js (section 10) after 120 seconds of IDLE time
+     (no mouse/keyboard/scroll/touch activity — the timer resets on every
+     interaction) for signed-out visitors only, via
+     window.RareVisionAuth.getCurrentUser(). Submitting the form both
+     records the email to the promo audience list and sends the welcome
+     email via window.RareVisionEmail.sendWelcomeEmail() (see the browser
+     bridge at the bottom of js/email-dispatcher.js, loaded above). Reuses
+     the same .overlay / .product-modal / .modal-close / .modal-body
+     scaffolding as the product detail and account-profile modals above, so
+     it inherits their centering, backdrop, and open/close styling from
+     css/style.css — see the "discount-popup" content styles further up
+     in <head>. -->
 <div class="overlay" id="discountPopupOverlay"></div>
 <div class="product-modal discount-popup" id="discountPopup" role="dialog" aria-modal="true" aria-hidden="true" aria-label="15% off offer">
   <button class="modal-close" id="discountPopupClose" aria-label="Close offer">&times;</button>
@@ -443,6 +604,14 @@
   </div>
 </div>
 
+<!-- ===================== GLOBAL FOOTER =====================
+     Populated at runtime by js/footer-loader.js, which fetches
+     footer.html and injects it here. Kept last in the DOM — safe because
+     every drawer/panel/modal above (cart, product modal, sign-in,
+     notifications, nav drawer) is position:fixed/absolute, so none of
+     them occupy normal document flow; this footer still renders directly
+     after the shop section visually, exactly where the old inline
+     <footer> used to sit. ===================== -->
 <div id="global-footer"></div>
 
 <script src="js/shared.js" defer></script>
